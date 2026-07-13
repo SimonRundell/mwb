@@ -64,7 +64,7 @@ Sibling project to [Retrieval Practice](../retrieval) -- same tech stack, brandi
     │   └── ProtectedRoute.jsx  Redirects unauthenticated users to /teacher/login
     ├── components/
     │   ├── ui/                 Reusable UI components (Button, Input, Modal, Spinner)
-    │   └── question/           QuestionEditor (Tiptap), AnswerCard
+    │   └── question/           QuestionEditor (Tiptap, with code block/indent support), AnswerCard
     └── pages/
         ├── student/            StudentEntry, AnswerSubmit
         └── teacher/            TeacherLogin, TeacherDashboard, QuestionEditorPage, WatchAnswers
@@ -156,6 +156,25 @@ Three tables:
 3. Students visit the site, enter the code, and type a short answer. No name or login is required -- their card is tracked by a random token stored in their browser, so they can revise their answer as many times as they like.
 4. The Watch board polls for new answers every 3 seconds and lays them out as a masonry grid of anonymous cards.
 5. Clicking **End Question** closes the code to new answers and deletes every answer for that round. The code itself is unchanged, so the same question can be relaunched for another class or another attempt.
+
+---
+
+## Question Editor Toolbar
+
+Questions are authored with a Tiptap rich text editor (`src/components/question/QuestionEditor.jsx`). The toolbar supports:
+
+| Button | Purpose |
+| --- | --- |
+| **B** / **I** / **U** | Bold, italic, underline |
+| **`</>`** | Inline code (short snippets like `print()`) |
+| **`{ }`** | Code block -- a multi-line, monospaced block that preserves indentation and line breaks, for pasting Python or other code samples |
+| **¶** | Normal text (clears block formatting back to a paragraph) |
+| **•** / **1.** | Bullet list / numbered list |
+| **⇥** / **⇤** | Indent / outdent -- shifts the current line(s) by 4 spaces; only active while the cursor is inside a code block, so Python's whitespace-sensitive layout survives editing |
+| **―** | Horizontal rule |
+| **↺** / **↻** | Undo / redo |
+
+Content is stored and transmitted as HTML and sanitised with DOMPurify's default tag allow-list on both the Watch board and the student answer screen, which already permits `pre`, `code` and `hr`.
 
 ---
 

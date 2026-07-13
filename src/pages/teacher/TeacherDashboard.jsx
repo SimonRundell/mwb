@@ -24,6 +24,7 @@ export default function TeacherDashboard() {
     const [questions, setQuestions] = useState([]);
     const [loading,   setLoading]   = useState(true);
     const [launchingId, setLaunchingId] = useState(null);
+    const [filterText, setFilterText] = useState('');
 
     useEffect(() => {
         loadQuestions();
@@ -36,6 +37,16 @@ export default function TeacherDashboard() {
             .catch(() => toast.error('Failed to load questions.'))
             .finally(() => setLoading(false));
     }
+
+    const filteredQuestions = questions.filter(q => {
+        const needle = filterText.trim().toLowerCase();
+        if (!needle) return true;
+        return (
+            (q.questionTitle || '').toLowerCase().includes(needle) ||
+            (q.questionCode  || '').toLowerCase().includes(needle) ||
+            stripHtml(q.questionHtml).toLowerCase().includes(needle)
+        );
+    });
 
     function copyCode(code) {
         navigator.clipboard.writeText(code)
@@ -77,6 +88,18 @@ export default function TeacherDashboard() {
                     <Button onClick={() => navigate('/teacher/question/new')}>+ New Question</Button>
                 </div>
 
+                {!loading && questions.length > 0 && (
+                    <div className="dashboard-toolbar">
+                        <input
+                            type="text"
+                            className="form-input dashboard-search"
+                            placeholder="Filter by title, code or content…"
+                            value={filterText}
+                            onChange={e => setFilterText(e.target.value)}
+                        />
+                    </div>
+                )}
+
                 {loading && <Spinner overlay label="Loading questions…" />}
 
                 {!loading && questions.length === 0 && (
@@ -87,9 +110,17 @@ export default function TeacherDashboard() {
                     </div>
                 )}
 
-                {!loading && questions.length > 0 && (
+                {!loading && questions.length > 0 && filteredQuestions.length === 0 && (
+                    <div className="card">
+                        <div className="card-body text-center">
+                            <p className="empty-state-text">No questions match "{filterText}".</p>
+                        </div>
+                    </div>
+                )}
+
+                {!loading && filteredQuestions.length > 0 && (
                     <div className="question-list">
-                        {questions.map(q => (
+                        {filteredQuestions.map(q => (
                             <div key={q.id} className="card question-list-item">
                                 <div className="card-body">
                                     <div className="question-list-row">

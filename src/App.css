@@ -456,6 +456,9 @@ img { max-width: 100%; display: block; }
 .dashboard-title { font-size: var(--text-2xl); font-weight: 700; color: var(--gray-900); }
 .dashboard-subtitle { font-size: var(--text-sm); color: var(--gray-500); margin-top: var(--space-1); }
 
+.dashboard-toolbar { margin-bottom: var(--space-4); }
+.dashboard-search { max-width: 360px; width: 100%; }
+
 .quiz-meta {
   display: flex;
   flex-wrap: wrap;
@@ -556,10 +559,18 @@ img { max-width: 100%; display: block; }
 
 .question-editor-btn:hover { background: var(--gray-200); }
 .question-editor-btn--active { background: var(--primary-light); border-color: var(--primary-mid); color: var(--primary-dark); }
+.question-editor-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.question-editor-btn:disabled:hover { background: transparent; }
+
+.question-editor-divider { width: 1px; margin: var(--space-1) var(--space-1); background: var(--gray-300); }
 
 .question-editor-content { padding: var(--space-4); min-height: 160px; }
 .question-editor-content .ProseMirror { outline: none; min-height: 140px; font-size: var(--text-base); line-height: 1.6; }
 .question-editor-content ul, .question-editor-content ol { padding-left: var(--space-6); }
+.question-editor-content code { font-family: 'Courier New', Courier, monospace; background: var(--gray-100); padding: 0.15em 0.4em; border-radius: var(--radius-sm); font-size: 0.9em; }
+.question-editor-content hr { border: none; border-top: 1px solid var(--gray-300); margin: var(--space-4) 0; }
+.question-editor-content pre { background: var(--gray-900); color: var(--white); padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm); overflow-x: auto; margin: var(--space-3) 0; }
+.question-editor-content pre code { background: none; padding: 0; color: inherit; font-size: var(--text-sm); white-space: pre; }
 
 /* =========================================================
    WATCH ANSWERS (projector view)
