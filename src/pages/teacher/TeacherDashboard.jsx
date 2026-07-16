@@ -5,6 +5,7 @@ import { useToast } from '../../contexts/ToastContext';
 import api     from '../../hooks/useApi';
 import Button  from '../../components/ui/Button';
 import Spinner from '../../components/ui/Spinner';
+import Modal   from '../../components/ui/Modal';
 
 function stripHtml(html) {
     const div = document.createElement('div');
@@ -25,6 +26,8 @@ export default function TeacherDashboard() {
     const [loading,   setLoading]   = useState(true);
     const [launchingId, setLaunchingId] = useState(null);
     const [filterText, setFilterText] = useState('');
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [deleting, setDeleting] = useState(false);
 
     useEffect(() => {
         loadQuestions();
@@ -52,6 +55,21 @@ export default function TeacherDashboard() {
         navigator.clipboard.writeText(code)
             .then(() => toast.success(`Code "${code}" copied!`))
             .catch(() => toast.error('Could not access clipboard — please copy the code manually.'));
+    }
+
+    async function confirmDelete() {
+        if (!deleteTarget) return;
+        setDeleting(true);
+        try {
+            await api.post('/deleteQuestion.php', { id: deleteTarget.id });
+            setQuestions(prev => prev.filter(q => q.id !== deleteTarget.id));
+            toast.success('Question deleted.');
+            setDeleteTarget(null);
+        } catch {
+            toast.error('Failed to delete question.');
+        } finally {
+            setDeleting(false);
+        }
     }
 
     async function launchQuestion(q) {
@@ -148,6 +166,15 @@ export default function TeacherDashboard() {
                                             >
                                                 Edit
                                             </Button>
+                                            <Button
+                                                variant="danger"
+                                                size="sm"
+                                                disabled={!!q.isActive}
+                                                title={q.isActive ? 'End the question before deleting it' : 'Delete question'}
+                                                onClick={() => setDeleteTarget(q)}
+                                            >
+                                                Delete
+                                            </Button>
                                             {q.isActive ? (
                                                 <Button
                                                     size="sm"
@@ -172,6 +199,27 @@ export default function TeacherDashboard() {
                     </div>
                 )}
             </main>
+
+            <Modal
+                open={!!deleteTarget}
+                onClose={() => (deleting ? null : setDeleteTarget(null))}
+                title="Delete question?"
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+                            Cancel
+                        </Button>
+                        <Button variant="danger" onClick={confirmDelete} disabled={deleting}>
+                            {deleting ? 'Deleting…' : 'Delete'}
+                        </Button>
+                    </>
+                }
+            >
+                <p>
+                    Are you sure you want to delete <strong>{deleteTarget?.questionTitle}</strong>?
+                    This will also remove any answers submitted for it. This cannot be undone.
+                </p>
+            </Modal>
         </div>
     );
 }
