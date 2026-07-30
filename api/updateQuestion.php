@@ -22,7 +22,7 @@ if (!$questionHtml)  send_response('questionHtml is required', 400);
 $now = date('Y-m-d H:i:s');
 
 $stmt = $mysqli->prepare(
-    "UPDATE tblquestion SET questionTitle = ?, questionHtml = ?, updatedAt = ?
+    "UPDATE mwb_question SET questionTitle = ?, questionHtml = ?, updatedAt = ?
      WHERE id = ? AND teacherId = ?"
 );
 

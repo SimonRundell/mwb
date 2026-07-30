@@ -16,7 +16,7 @@ $auth = requireAuth();
 $id = (int)($receivedData['id'] ?? 0);
 if (!$id) send_response('id is required', 400);
 
-$check = $mysqli->prepare("SELECT id, isActive FROM tblquestion WHERE id = ? AND teacherId = ?");
+$check = $mysqli->prepare("SELECT id, isActive FROM mwb_question WHERE id = ? AND teacherId = ?");
 $check->bind_param("ii", $id, $auth['userId']);
 $check->execute();
 $question = $check->get_result()->fetch_assoc();
@@ -28,7 +28,7 @@ if (!$question) {
 
 $stmt = $mysqli->prepare(
     "SELECT id, answerText, submittedAt, updatedAt
-     FROM tblanswer
+     FROM mwb_answer
      WHERE questionId = ?
      ORDER BY submittedAt ASC"
 );

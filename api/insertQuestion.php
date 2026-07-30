@@ -22,7 +22,7 @@ if (!$questionHtml)  send_response('questionHtml is required', 400);
 $now = date('Y-m-d H:i:s');
 
 $stmt = $mysqli->prepare(
-    "INSERT INTO tblquestion (questionCode, questionTitle, questionHtml, teacherId, isActive, createdAt, updatedAt)
+    "INSERT INTO mwb_question (questionCode, questionTitle, questionHtml, teacherId, isActive, createdAt, updatedAt)
      VALUES (?, ?, ?, ?, 0, ?, ?)"
 );
 

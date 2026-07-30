@@ -10,7 +10,7 @@
 include 'setup.php';
 
 $stmt = $mysqli->prepare(
-    "SELECT id, teacherName, email FROM tbluser WHERE email = ? AND passwordHash = ?"
+    "SELECT id, teacherName, email FROM mwb_user WHERE email = ? AND passwordHash = ?"
 );
 
 if (!$stmt) {

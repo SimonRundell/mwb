@@ -14,11 +14,11 @@ CREATE DATABASE IF NOT EXISTS `mwb`
 USE `mwb`;
 
 -- ----------------------------
--- tbluser — teacher accounts
+-- mwb_user — teacher accounts
 -- Students are anonymous; only teachers log in.
 -- ----------------------------
-DROP TABLE IF EXISTS `tbluser`;
-CREATE TABLE `tbluser` (
+DROP TABLE IF EXISTS `mwb_user`;
+CREATE TABLE `mwb_user` (
     `id`           INT          NOT NULL AUTO_INCREMENT,
     `email`        VARCHAR(255) NOT NULL,
     `passwordHash` VARCHAR(255) NOT NULL,
@@ -32,21 +32,21 @@ CREATE TABLE `tbluser` (
 
 -- Default teacher account (password: 1234 — change immediately)
 -- MD5('1234') = 81dc9bdb52d04dc20036dbd8313ed055
-INSERT INTO `tbluser` (`email`, `passwordHash`, `teacherName`)
+INSERT INTO `mwb_user` (`email`, `passwordHash`, `teacherName`)
 VALUES ('name@school.ac.uk', '81dc9bdb52d04dc20036dbd8313ed055', 'Administrator');
 
 -- ----------------------------
--- tblquestion — hinge questions, one stable code per question
+-- mwb_question — hinge questions, one stable code per question
 -- isActive/launchedAt/endedAt track the live join window; the code
 -- itself never changes between launches.
 -- ----------------------------
-DROP TABLE IF EXISTS `tblquestion`;
-CREATE TABLE `tblquestion` (
+DROP TABLE IF EXISTS `mwb_question`;
+CREATE TABLE `mwb_question` (
     `id`            INT          NOT NULL AUTO_INCREMENT,
     `questionCode`  VARCHAR(10)  NOT NULL,
     `questionTitle` VARCHAR(255) NOT NULL,
     `questionHtml`  LONGTEXT     NOT NULL,
-    `teacherId`     INT          NOT NULL COMMENT 'tbluser.id',
+    `teacherId`     INT          NOT NULL COMMENT 'mwb_user.id',
     `isActive`      TINYINT      NOT NULL DEFAULT 0 COMMENT '1 = currently accepting answers',
     `launchedAt`    DATETIME         NULL,
     `endedAt`       DATETIME         NULL,
@@ -61,12 +61,12 @@ CREATE TABLE `tblquestion` (
   ROW_FORMAT=DYNAMIC;
 
 -- ----------------------------
--- tblanswer — one editable row per student per question launch.
+-- mwb_answer — one editable row per student per question launch.
 -- studentToken is a random value generated client-side; the unique
 -- key makes submission an upsert so a student can revise their answer.
 -- ----------------------------
-DROP TABLE IF EXISTS `tblanswer`;
-CREATE TABLE `tblanswer` (
+DROP TABLE IF EXISTS `mwb_answer`;
+CREATE TABLE `mwb_answer` (
     `id`           INT          NOT NULL AUTO_INCREMENT,
     `questionId`   INT          NOT NULL,
     `studentToken` VARCHAR(64)  NOT NULL,

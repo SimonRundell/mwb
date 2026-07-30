@@ -16,7 +16,7 @@ if (!$questionCode) send_response('questionCode is required', 400);
 
 $stmt = $mysqli->prepare(
     "SELECT id, questionCode, questionTitle, questionHtml, isActive
-     FROM tblquestion
+     FROM mwb_question
      WHERE questionCode = ?"
 );
 $stmt->bind_param("s", $questionCode);

@@ -19,7 +19,7 @@ if (!$studentToken) send_response('studentToken is required', 400);
 if ($answerText === '') send_response('answerText is required', 400);
 if (mb_strlen($answerText) > 500) send_response('answerText is too long', 400);
 
-$check = $mysqli->prepare("SELECT isActive FROM tblquestion WHERE id = ?");
+$check = $mysqli->prepare("SELECT isActive FROM mwb_question WHERE id = ?");
 $check->bind_param("i", $questionId);
 $check->execute();
 $question = $check->get_result()->fetch_assoc();
@@ -35,7 +35,7 @@ if (!$question['isActive']) {
 $now = date('Y-m-d H:i:s');
 
 $stmt = $mysqli->prepare(
-    "INSERT INTO tblanswer (questionId, studentToken, answerText, submittedAt, updatedAt)
+    "INSERT INTO mwb_answer (questionId, studentToken, answerText, submittedAt, updatedAt)
      VALUES (?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE answerText = VALUES(answerText), updatedAt = VALUES(updatedAt)"
 );

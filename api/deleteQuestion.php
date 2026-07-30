@@ -14,7 +14,7 @@ $auth = requireAuth();
 $id = (int)($receivedData['id'] ?? 0);
 if (!$id) send_response('id is required', 400);
 
-$check = $mysqli->prepare("SELECT id FROM tblquestion WHERE id = ? AND teacherId = ?");
+$check = $mysqli->prepare("SELECT id FROM mwb_question WHERE id = ? AND teacherId = ?");
 $check->bind_param("ii", $id, $auth['userId']);
 $check->execute();
 $question = $check->get_result()->fetch_assoc();
@@ -24,12 +24,12 @@ if (!$question) {
     send_response('Question not found.', 404);
 }
 
-$deleteAnswers = $mysqli->prepare("DELETE FROM tblanswer WHERE questionId = ?");
+$deleteAnswers = $mysqli->prepare("DELETE FROM mwb_answer WHERE questionId = ?");
 $deleteAnswers->bind_param("i", $id);
 $deleteAnswers->execute();
 $deleteAnswers->close();
 
-$stmt = $mysqli->prepare("DELETE FROM tblquestion WHERE id = ? AND teacherId = ?");
+$stmt = $mysqli->prepare("DELETE FROM mwb_question WHERE id = ? AND teacherId = ?");
 $stmt->bind_param("ii", $id, $auth['userId']);
 
 if (!$stmt->execute()) {

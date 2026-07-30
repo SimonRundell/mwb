@@ -16,7 +16,7 @@ if (!$id) send_response('id is required', 400);
 
 $stmt = $mysqli->prepare(
     "SELECT id, questionCode, questionTitle, questionHtml, isActive, launchedAt, endedAt, createdAt, updatedAt
-     FROM tblquestion
+     FROM mwb_question
      WHERE id = ? AND teacherId = ?"
 );
 
