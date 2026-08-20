@@ -72,12 +72,17 @@ function verifyJWT(string $token, string $secret) {
 
 /**
  * Enforces JWT authentication for teacher-only endpoints.
- * Terminates with 401 if the token is missing, invalid, or not a teacher token.
+ * Terminates with 401 if the token is missing, invalid, not a teacher token,
+ * or the account has since been deactivated.
  *
- * @return array Decoded JWT payload.
+ * isAdmin/isActive are re-read from the database on every call rather than
+ * trusted from the JWT, so a promotion/demotion or deactivation takes effect
+ * immediately instead of waiting up to 24h for the token to expire.
+ *
+ * @return array Decoded JWT payload, merged with current isAdmin/name/email.
  */
 function requireAuth(): array {
-    global $config;
+    global $config, $mysqli;
     $authHeader = $_SERVER['HTTP_AUTHORIZATION']
         ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
         ?? apache_request_headers()['Authorization']
@@ -90,6 +95,20 @@ function requireAuth(): array {
     if (!$payload || empty($payload['teacher'])) {
         send_response('Unauthorised: invalid or expired token', 401);
     }
+
+    $stmt = $mysqli->prepare('SELECT teacherName, email, isAdmin, isActive FROM mwb_user WHERE id = ?');
+    $stmt->bind_param('i', $payload['userId']);
+    $stmt->execute();
+    $user = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if (!$user || !$user['isActive']) {
+        send_response('Unauthorised: account inactive', 401);
+    }
+
+    $payload['name']    = $user['teacherName'];
+    $payload['email']   = $user['email'];
+    $payload['isAdmin'] = (bool)$user['isAdmin'];
     return $payload;
 }
 
@@ -101,7 +120,7 @@ function requireAuth(): array {
  */
 function requireAdmin(): array {
     $payload = requireAuth();
-    if (empty($payload['admin'])) {
+    if (empty($payload['isAdmin'])) {
         send_response('Forbidden: administrator access required', 403);
     }
     return $payload;

@@ -30,8 +30,17 @@ export function AuthProvider({ children }) {
         setTeacher(null);
     }
 
+    /**
+     * Refreshes the stored teacher profile (name, etc.) without touching the token.
+     * Used after the signed-in user edits their own name/password.
+     */
+    function updateTeacher(teacherObj) {
+        localStorage.setItem('mwbTeacher', JSON.stringify(teacherObj));
+        setTeacher(teacherObj);
+    }
+
     return (
-        <AuthContext.Provider value={{ token, teacher, login, logout, isAuthenticated: !!token }}>
+        <AuthContext.Provider value={{ token, teacher, login, logout, updateTeacher, isAuthenticated: !!token }}>
             {children}
         </AuthContext.Provider>
     );

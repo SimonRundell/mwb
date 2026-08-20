@@ -10,7 +10,7 @@
 include 'setup.php';
 
 $stmt = $mysqli->prepare(
-    "SELECT id, teacherName, email FROM mwb_user WHERE email = ? AND passwordHash = ?"
+    "SELECT id, teacherName, email, isAdmin, isActive FROM mwb_user WHERE email = ? AND passwordHash = ?"
 );
 
 if (!$stmt) {
@@ -33,6 +33,10 @@ if (!$user) {
     send_response("Invalid credentials.", 401);
 }
 
+if (!$user['isActive']) {
+    send_response("This account has been deactivated. Contact an administrator.", 403);
+}
+
 $token = generateJWT(
     [
         'userId'  => $user['id'],
@@ -48,8 +52,9 @@ log_info("Teacher login: " . $user['email']);
 send_response([
     'token'   => $token,
     'teacher' => [
-        'id'    => $user['id'],
-        'name'  => $user['teacherName'],
-        'email' => $user['email'],
+        'id'      => $user['id'],
+        'name'    => $user['teacherName'],
+        'email'   => $user['email'],
+        'isAdmin' => (bool)$user['isAdmin'],
     ],
 ], 200);

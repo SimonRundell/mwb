@@ -23,6 +23,8 @@ CREATE TABLE `mwb_user` (
     `email`        VARCHAR(255) NOT NULL,
     `passwordHash` VARCHAR(255) NOT NULL,
     `teacherName`  VARCHAR(255) NOT NULL,
+    `isAdmin`      TINYINT      NOT NULL DEFAULT 0 COMMENT '1 = can manage all accounts',
+    `isActive`     TINYINT      NOT NULL DEFAULT 1 COMMENT '0 = account closed/suspended, cannot log in',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_email` (`email`)
 ) ENGINE=InnoDB
@@ -32,8 +34,8 @@ CREATE TABLE `mwb_user` (
 
 -- Default teacher account (password: 1234 — change immediately)
 -- MD5('1234') = 81dc9bdb52d04dc20036dbd8313ed055
-INSERT INTO `mwb_user` (`email`, `passwordHash`, `teacherName`)
-VALUES ('name@school.ac.uk', '81dc9bdb52d04dc20036dbd8313ed055', 'Administrator');
+INSERT INTO `mwb_user` (`email`, `passwordHash`, `teacherName`, `isAdmin`)
+VALUES ('name@school.ac.uk', '81dc9bdb52d04dc20036dbd8313ed055', 'Administrator', 1);
 
 -- ----------------------------
 -- mwb_question — hinge questions, one stable code per question

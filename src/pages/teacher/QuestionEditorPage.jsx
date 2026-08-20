@@ -6,8 +6,7 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Spinner from '../../components/ui/Spinner';
 import QuestionEditor from '../../components/question/QuestionEditor';
-
-function genCode() { return Math.random().toString(36).substring(2, 8); }
+import { genCode } from '../../utils/questionCode';
 
 /**
  * QuestionEditorPage — creates a new hinge question or edits an existing

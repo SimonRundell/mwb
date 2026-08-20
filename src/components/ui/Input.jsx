@@ -1,5 +1,8 @@
+import { useState } from 'react';
+
 /**
  * Input — labelled form input with optional hint and error message.
+ * Password inputs automatically get a show/hide toggle.
  */
 export default function Input({
     label,
@@ -10,16 +13,47 @@ export default function Input({
     type = 'text',
     ...props
 }) {
+    const [revealed, setRevealed] = useState(false);
+    const isPassword = type === 'password';
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
+
+    const input = (
+        <input
+            id={inputId}
+            type={isPassword && revealed ? 'text' : type}
+            className={`form-input${isPassword ? ' form-input--with-toggle' : ''}${error ? ' form-input--error' : ''} ${className}`}
+            {...props}
+        />
+    );
+
     return (
         <div className="form-group">
             {label && <label className="form-label" htmlFor={inputId}>{label}</label>}
-            <input
-                id={inputId}
-                type={type}
-                className={`form-input${error ? ' form-input--error' : ''} ${className}`}
-                {...props}
-            />
+            {isPassword ? (
+                <div className="password-field">
+                    {input}
+                    <button
+                        type="button"
+                        className="password-toggle"
+                        onClick={() => setRevealed(r => !r)}
+                        aria-label={revealed ? 'Hide password' : 'Show password'}
+                        aria-pressed={revealed}
+                        tabIndex={-1}
+                    >
+                        {revealed ? (
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                            </svg>
+                        ) : (
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                        )}
+                    </button>
+                </div>
+            ) : input}
             {hint  && <p className="form-hint">{hint}</p>}
             {error && <p className="form-error" role="alert">{error}</p>}
         </div>
