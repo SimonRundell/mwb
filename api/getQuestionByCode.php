@@ -1,11 +1,13 @@
 <?php
 /**
  * getQuestionByCode.php — public lookup used by students joining a question.
+ * A code always accepts answers once the question exists, whether or not a
+ * teacher has launched the monitor screen for it yet, so there is no "not
+ * accepting answers" state here — only "exists" or "doesn't".
  *
  * POST { questionCode }
- * Returns { id, questionCode, questionTitle, questionHtml } if the question
- * is currently active; 404 if the code is unknown, 410 if it exists but has
- * been ended.
+ * Returns { id, questionCode, questionTitle, questionHtml }; 404 if the
+ * code is unknown.
  *
  * @license CC BY-NC-SA 4.0 — Simon Rundell / CodeMonkey Design Ltd. 2026
  */
@@ -15,7 +17,7 @@ $questionCode = trim($receivedData['questionCode'] ?? '');
 if (!$questionCode) send_response('questionCode is required', 400);
 
 $stmt = $mysqli->prepare(
-    "SELECT id, questionCode, questionTitle, questionHtml, isActive
+    "SELECT id, questionCode, questionTitle, questionHtml
      FROM mwb_question
      WHERE questionCode = ?"
 );
@@ -27,12 +29,6 @@ $stmt->close();
 if (!$question) {
     send_response('Code not found. Check the code and try again.', 404);
 }
-
-if (!$question['isActive']) {
-    send_response('This question is not currently accepting answers.', 410);
-}
-
-unset($question['isActive']);
 
 http_response_code(200);
 die(json_encode($question));

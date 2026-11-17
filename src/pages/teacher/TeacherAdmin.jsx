@@ -11,6 +11,7 @@ import Switch     from '../../components/ui/Switch';
 import AppHeader  from '../../components/layout/AppHeader';
 
 const emptyEdit = { teacherName: '', email: '', password: '', isAdmin: false, isActive: true };
+const emptyAdd  = { teacherName: '', email: '', password: '', isAdmin: false, isActive: true };
 
 /**
  * TeacherAdmin — administrator tab for managing all staff accounts:
@@ -26,6 +27,14 @@ export default function TeacherAdmin() {
     const [edit,       setEdit]       = useState(emptyEdit);
     const [saving,      setSaving]    = useState(false);
     const [error,       setError]     = useState('');
+
+    const [addOpen, setAddOpen] = useState(false);
+    const [add,     setAdd]     = useState(emptyAdd);
+    const [adding,  setAdding]  = useState(false);
+    const [addError, setAddError] = useState('');
+
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [deleting,     setDeleting]     = useState(false);
 
     useEffect(() => {
         loadUsers();
@@ -81,6 +90,55 @@ export default function TeacherAdmin() {
         }
     }
 
+    function openAdd() {
+        setAdd(emptyAdd);
+        setAddError('');
+        setAddOpen(true);
+    }
+
+    async function saveAdd() {
+        if (!add.teacherName.trim()) return setAddError('Name cannot be empty.');
+        if (!add.email.trim()) return setAddError('Email cannot be empty.');
+        if (!add.password) return setAddError('A password is required for a new account.');
+
+        setAdding(true);
+        setAddError('');
+        try {
+            const payload = {
+                teacherName: add.teacherName.trim(),
+                email: add.email.trim(),
+                passwordHash: CryptoJS.MD5(add.password).toString(),
+                isAdmin: add.isAdmin,
+                isActive: add.isActive,
+            };
+            const res = await api.post('/addUser.php', payload);
+            setUsers(prev => [...prev, res.data].sort((a, b) => a.teacherName.localeCompare(b.teacherName)));
+            toast.success('Account created.');
+            setAddOpen(false);
+        } catch (err) {
+            const msg = err.response?.data?.message;
+            setAddError(msg || 'Failed to create account.');
+        } finally {
+            setAdding(false);
+        }
+    }
+
+    async function confirmDelete() {
+        if (!deleteTarget) return;
+        setDeleting(true);
+        try {
+            await api.post('/deleteUser.php', { id: deleteTarget.id });
+            setUsers(prev => prev.filter(u => u.id !== deleteTarget.id));
+            toast.success('Account deleted.');
+            setDeleteTarget(null);
+        } catch (err) {
+            const msg = err.response?.data?.message;
+            toast.error(msg || 'Failed to delete account.');
+        } finally {
+            setDeleting(false);
+        }
+    }
+
     const isSelf = editTarget?.id === teacher?.id;
 
     return (
@@ -92,6 +150,7 @@ export default function TeacherAdmin() {
                         <h1 className="dashboard-title">Admin — Staff Accounts</h1>
                         <p className="dashboard-subtitle">Edit accounts, reset passwords, and activate or deactivate staff</p>
                     </div>
+                    <Button onClick={openAdd}>+ Add user</Button>
                 </div>
 
                 {loading && <Spinner overlay label="Loading accounts…" />}
@@ -125,9 +184,20 @@ export default function TeacherAdmin() {
                                                 </div>
                                             </td>
                                             <td>
-                                                <Button variant="secondary" size="sm" onClick={() => openEdit(u)}>
-                                                    Edit
-                                                </Button>
+                                                <div className="flex gap-2">
+                                                    <Button variant="secondary" size="sm" onClick={() => openEdit(u)}>
+                                                        Edit
+                                                    </Button>
+                                                    <Button
+                                                        variant="danger"
+                                                        size="sm"
+                                                        disabled={u.id === teacher?.id}
+                                                        title={u.id === teacher?.id ? 'Ask another administrator to delete your own account' : 'Delete account'}
+                                                        onClick={() => setDeleteTarget(u)}
+                                                    >
+                                                        Delete
+                                                    </Button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -188,6 +258,73 @@ export default function TeacherAdmin() {
                     <p className="form-hint">Ask another administrator to change your own admin or active status.</p>
                 )}
                 {error && <p className="form-error mt-2" role="alert">{error}</p>}
+            </Modal>
+
+            <Modal
+                open={addOpen}
+                onClose={() => (adding ? null : setAddOpen(false))}
+                title="Add user"
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={() => setAddOpen(false)} disabled={adding}>
+                            Cancel
+                        </Button>
+                        <Button onClick={saveAdd} disabled={adding}>
+                            {adding ? 'Creating…' : 'Create account'}
+                        </Button>
+                    </>
+                }
+            >
+                <Input
+                    label="Display name"
+                    type="text"
+                    value={add.teacherName}
+                    onChange={e => setAdd(v => ({ ...v, teacherName: e.target.value }))}
+                />
+                <Input
+                    label="Email address"
+                    type="email"
+                    value={add.email}
+                    onChange={e => setAdd(v => ({ ...v, email: e.target.value }))}
+                />
+                <Input
+                    label="Password"
+                    type="password"
+                    value={add.password}
+                    onChange={e => setAdd(v => ({ ...v, password: e.target.value }))}
+                />
+                <Switch
+                    label="Administrator"
+                    checked={add.isAdmin}
+                    onChange={v => setAdd(prev => ({ ...prev, isAdmin: v }))}
+                />
+                <Switch
+                    label="Account active"
+                    checked={add.isActive}
+                    onChange={v => setAdd(prev => ({ ...prev, isActive: v }))}
+                />
+                {addError && <p className="form-error mt-2" role="alert">{addError}</p>}
+            </Modal>
+
+            <Modal
+                open={!!deleteTarget}
+                onClose={() => (deleting ? null : setDeleteTarget(null))}
+                title="Delete account?"
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+                            Cancel
+                        </Button>
+                        <Button variant="danger" onClick={confirmDelete} disabled={deleting}>
+                            {deleting ? 'Deleting…' : 'Delete'}
+                        </Button>
+                    </>
+                }
+            >
+                <p>
+                    Are you sure you want to delete <strong>{deleteTarget?.teacherName}</strong>&apos;s account?
+                    This will also permanently delete any questions and answers they own. This cannot be undone.
+                </p>
             </Modal>
         </div>
     );

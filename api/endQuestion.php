@@ -1,7 +1,9 @@
 <?php
 /**
- * endQuestion.php — closes a question to new answers and deletes all
- * answers submitted during the round.
+ * endQuestion.php — marks a question no longer live and leaves its
+ * monitor screen. Students can still answer by code afterwards (answers are
+ * never gated on launch state) and existing answers are left in place —
+ * use clearAnswers.php to wipe the board.
  *
  * POST { id } (JWT required)
  *
@@ -23,11 +25,6 @@ $check->close();
 if (!$question) {
     send_response('Question not found.', 404);
 }
-
-$del = $mysqli->prepare("DELETE FROM mwb_answer WHERE questionId = ?");
-$del->bind_param("i", $id);
-$del->execute();
-$del->close();
 
 $now = date('Y-m-d H:i:s');
 $stmt = $mysqli->prepare(

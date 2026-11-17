@@ -12,6 +12,29 @@ ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
 
+/* Since PHP 8.1, mysqli throws mysqli_sql_exception on SQL errors instead of
+   returning false, so a bad query becomes an uncaught exception rather than
+   reaching any endpoint's own error handling. Without this, such failures
+   produced a bare 500 with nothing in server.log -- the real detail only
+   showed up in php.ini's separate error_log. These handlers catch anything
+   uncaught (DB errors, type errors, etc.) for every endpoint, log it here,
+   and still return a clean JSON 500 instead of a blank/HTML response. */
+set_exception_handler(function (\Throwable $e) {
+    log_info('UNCAUGHT ' . get_class($e) . ': ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+    send_response('Internal server error', 500);
+});
+
+register_shutdown_function(function () {
+    $error = error_get_last();
+    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        log_info('FATAL: ' . $error['message'] . ' in ' . $error['file'] . ':' . $error['line']);
+        if (!headers_sent()) {
+            http_response_code(500);
+            echo json_encode(['message' => 'Internal server error', 'status_code' => 500]);
+        }
+    }
+});
+
 $config = json_decode(file_get_contents(__DIR__ . '/.config.json'), true);
 
 /* CLIENT_FOUND_ROWS makes affected_rows count WHERE-matched rows rather than

@@ -24,12 +24,8 @@ export default function StudentEntry() {
         try {
             await api.post('/getQuestionByCode.php', { questionCode: trimmed });
             navigate(`/answer/${trimmed}`);
-        } catch (err) {
-            if (err.response?.status === 410) {
-                setError('This question is not currently accepting answers.');
-            } else {
-                setError('Code not found. Check the code and try again.');
-            }
+        } catch {
+            setError('Code not found. Check the code and try again.');
         } finally {
             setLoading(false);
         }

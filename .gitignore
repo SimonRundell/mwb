@@ -2,6 +2,7 @@
 logs
 *.log
 api/server.log
+api/adminer.php
 
 # Local configuration — contains DB credentials and JWT secret
 api/.config.json

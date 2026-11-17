@@ -10,9 +10,12 @@ import AnswerCard from '../../components/question/AnswerCard';
 const POLL_INTERVAL_MS = 3000;
 
 /**
- * WatchAnswers — projector-friendly live masonry board for a launched
- * hinge question. Polls getAnswers.php every 3 seconds. "End Question"
- * closes the code and deletes all answers.
+ * WatchAnswers — projector-friendly live masonry board for a question's
+ * monitor screen. Polls getAnswers.php every 3 seconds. Students can answer
+ * by code at any time, including before this screen is opened, so answers
+ * already here when launched are expected, not a bug. "Clear answers" wipes
+ * the board (e.g. inappropriate content or leftovers from a previous class)
+ * without ending the session; "End Question" just leaves the monitor screen.
  */
 export default function WatchAnswers() {
     const { id } = useParams();
@@ -23,6 +26,7 @@ export default function WatchAnswers() {
     const [answers,  setAnswers]  = useState([]);
     const [loading,  setLoading]  = useState(true);
     const [ending,   setEnding]   = useState(false);
+    const [clearing, setClearing] = useState(false);
     const pollRef = useRef(null);
 
     useEffect(() => {
@@ -47,12 +51,26 @@ export default function WatchAnswers() {
         setEnding(true);
         try {
             await api.post('/endQuestion.php', { id: Number(id) });
-            toast.success('Question ended — answers cleared.');
+            toast.success('Question ended.');
             navigate('/teacher');
         } catch {
             toast.error('Failed to end question.');
         } finally {
             setEnding(false);
+        }
+    }
+
+    async function handleClear() {
+        if (!window.confirm('Clear all current answers from the board? This cannot be undone.')) return;
+        setClearing(true);
+        try {
+            await api.post('/clearAnswers.php', { id: Number(id) });
+            setAnswers([]);
+            toast.success('Answers cleared.');
+        } catch {
+            toast.error('Failed to clear answers.');
+        } finally {
+            setClearing(false);
         }
     }
 
@@ -74,6 +92,14 @@ export default function WatchAnswers() {
                 </div>
 
                 <div className="watch-header-actions">
+                    <Button
+                        variant="secondary"
+                        onClick={handleClear}
+                        disabled={clearing || answers.length === 0}
+                        title="Remove all current answers from the board"
+                    >
+                        {clearing ? 'Clearing…' : 'Clear answers'}
+                    </Button>
                     <Button variant="danger" onClick={handleEnd} disabled={ending}>
                         {ending ? 'Ending…' : 'End Question'}
                     </Button>

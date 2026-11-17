@@ -41,11 +41,12 @@ Sibling project to [Retrieval Practice](../retrieval) -- same tech stack, brandi
 │   ├── insertQuestion.php      Create a new question (JWT required)
 │   ├── updateQuestion.php      Edit an existing question's title/content (JWT required)
 │   ├── deleteQuestion.php      Permanently delete a question and its answers (JWT required)
-│   ├── launchQuestion.php      Open a question's code for answers, clearing old ones (JWT required)
-│   ├── endQuestion.php         Close a question and delete its answers (JWT required)
+│   ├── launchQuestion.php      Mark a question live and open its monitor screen (JWT required)
+│   ├── endQuestion.php         Mark a question no longer live (JWT required)
+│   ├── clearAnswers.php        Wipe all current answers without ending the question (JWT required)
 │   ├── getAnswers.php          Live answer list for the Watch board (JWT required)
 │   ├── getQuestionByCode.php   Public lookup used by students joining a question
-│   └── submitAnswer.php        Public upsert of a student's answer
+│   └── submitAnswer.php        Public upsert of a student's answer, accepted any time
 │
 ├── data/
 │   └── schema.sql              Fresh installation schema
@@ -166,10 +167,10 @@ Three tables (all prefixed `mwb_` so the app can share a database with other too
 ## Live Question Flow
 
 1. The teacher creates a question in the rich text editor and saves it -- this assigns a permanent code.
-2. Clicking **Launch** opens the code for answers and clears any answers left over from a previous round, then takes the teacher to the live Watch board.
-3. Students visit the site, enter the code, and type a short answer. No name or login is required -- their card is tracked by a random token stored in their browser, so they can revise their answer as many times as they like.
-4. The Watch board polls for new answers every 3 seconds and lays them out as a masonry grid of anonymous cards.
-5. Clicking **End Question** closes the code to new answers and deletes every answer for that round. The code itself is unchanged, so the same question can be relaunched for another class or another attempt.
+2. Students can visit the site, enter the code, and type a short answer as soon as the question is saved -- a code always accepts answers, whether or not a teacher has opened its monitor screen yet. No name or login is required -- their card is tracked by a random token stored in their browser, so they can revise their answer as many times as they like.
+3. Clicking **Launch** marks the question live and takes the teacher to the Watch board, which polls for new answers every 3 seconds and lays them out as a masonry grid of anonymous cards -- including any answers submitted before launch.
+4. **Clear answers** wipes every answer currently on the board (e.g. inappropriate content, or leftovers from a previous class) without ending the session -- students can keep answering straight away.
+5. Clicking **End Question** marks it no longer live and returns to the dashboard. The code itself is unchanged and still accepts answers, so the same question can be relaunched for another class or another attempt -- use **Clear answers** first if you don't want to carry answers over.
 
 ---
 

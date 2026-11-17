@@ -22,7 +22,8 @@ function getStudentToken() {
 /**
  * AnswerSubmit — renders the teacher's rich-text question and a short
  * answer box. Submission upserts the student's own card by studentToken,
- * so they can revise their answer until the teacher ends the question.
+ * so they can revise their answer any time, whether or not the teacher
+ * has opened the monitor screen yet.
  */
 export default function AnswerSubmit() {
     const { code } = useParams();
@@ -30,7 +31,6 @@ export default function AnswerSubmit() {
 
     const [question,   setQuestion]   = useState(null);
     const [loading,    setLoading]    = useState(true);
-    const [ended,      setEnded]      = useState(false);
     const [notFound,   setNotFound]   = useState(false);
     const [answer,     setAnswer]     = useState('');
     const [submitted,  setSubmitted]  = useState(false);
@@ -40,10 +40,7 @@ export default function AnswerSubmit() {
     useEffect(() => {
         api.post('/getQuestionByCode.php', { questionCode: code })
             .then(res => setQuestion(res.data))
-            .catch(err => {
-                if (err.response?.status === 410) setEnded(true);
-                else setNotFound(true);
-            })
+            .catch(() => setNotFound(true))
             .finally(() => setLoading(false));
     }, [code]);
 
@@ -60,12 +57,8 @@ export default function AnswerSubmit() {
                 answerText: answer.trim(),
             });
             setSubmitted(true);
-        } catch (err) {
-            if (err.response?.status === 410) {
-                setEnded(true);
-            } else {
-                setError('Failed to submit. Please try again.');
-            }
+        } catch {
+            setError('Failed to submit. Please try again.');
         } finally {
             setSubmitting(false);
         }
@@ -73,19 +66,15 @@ export default function AnswerSubmit() {
 
     if (loading) return <Spinner overlay label="Loading question…" />;
 
-    if (notFound || ended) {
+    if (notFound) {
         return (
             <div className="entry-page">
                 <div className="entry-card">
                     <div className="entry-logo">
                         <img src="/exeter-logo.png" alt="Exeter College" />
                     </div>
-                    <h1 className="entry-title">{notFound ? 'Code not found' : 'Question ended'}</h1>
-                    <p className="entry-subtitle">
-                        {notFound
-                            ? 'Check the code and try again.'
-                            : 'Your teacher has closed this question to new answers.'}
-                    </p>
+                    <h1 className="entry-title">Code not found</h1>
+                    <p className="entry-subtitle">Check the code and try again.</p>
                     <Button fullWidth size="lg" onClick={() => navigate('/')}>← Back to start</Button>
                 </div>
             </div>
@@ -118,7 +107,7 @@ export default function AnswerSubmit() {
                     </Button>
                     {submitted && (
                         <p className="form-hint text-center mt-3">
-                            Answer submitted — you can change it any time until your teacher ends the question.
+                            Answer submitted — you can change it any time.
                         </p>
                     )}
                 </form>

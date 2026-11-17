@@ -1,7 +1,9 @@
 <?php
 /**
- * launchQuestion.php — (re)opens a question for answers under its existing code.
- * Clears any answers left over from a previous round before opening.
+ * launchQuestion.php — marks a question as live and opens its display/monitor
+ * screen. Students can already answer by code before this point; launching
+ * does not clear those early answers — use clearAnswers.php to wipe the
+ * board explicitly if needed.
  *
  * POST { id } (JWT required)
  * Returns { questionCode }
@@ -24,11 +26,6 @@ $check->close();
 if (!$question) {
     send_response('Question not found.', 404);
 }
-
-$del = $mysqli->prepare("DELETE FROM mwb_answer WHERE questionId = ?");
-$del->bind_param("i", $id);
-$del->execute();
-$del->close();
 
 $now = date('Y-m-d H:i:s');
 $stmt = $mysqli->prepare(
