@@ -75,6 +75,8 @@ CREATE TABLE `mwb_answer` (
     `answerText`   VARCHAR(500) NOT NULL,
     `submittedAt`  DATETIME     NOT NULL,
     `updatedAt`    DATETIME     NOT NULL,
+    `notifyType`   VARCHAR(20)      NULL COMMENT 'Pending notification for the originating student: warning | praise',
+    `notifiedAt`   DATETIME         NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_question_student` (`questionId`, `studentToken`),
     INDEX `idx_questionId` (`questionId`)

@@ -45,8 +45,10 @@ Sibling project to [Retrieval Practice](../retrieval) -- same tech stack, brandi
 │   ├── endQuestion.php         Mark a question no longer live (JWT required)
 │   ├── clearAnswers.php        Wipe all current answers without ending the question (JWT required)
 │   ├── getAnswers.php          Live answer list for the Watch board (JWT required)
+│   ├── notifyAnswer.php        Flag/praise a card, notifying the originating student (JWT required)
 │   ├── getQuestionByCode.php   Public lookup used by students joining a question
-│   └── submitAnswer.php        Public upsert of a student's answer, accepted any time
+│   ├── submitAnswer.php        Public upsert of a student's answer, accepted any time
+│   └── checkNotification.php   Public poll for a pending flag/praise notification
 │
 ├── data/
 │   └── schema.sql              Fresh installation schema
@@ -160,7 +162,7 @@ Three tables (all prefixed `mwb_` so the app can share a database with other too
 | --- | --- |
 | `mwb_user` | Teacher/staff accounts. Students are anonymous and have no rows here. `isAdmin` grants access to the Admin tab; `isActive` (0) blocks login and is checked on every authenticated request, not just at login. |
 | `mwb_question` | One row per hinge question. `questionCode` is assigned once at creation and never changes -- launching just reopens it. |
-| `mwb_answer` | One row per student per launch, keyed by a random `studentToken` generated in the browser. Upserted on submit so each student has exactly one editable card. |
+| `mwb_answer` | One row per student per launch, keyed by a random `studentToken` generated in the browser. Upserted on submit so each student has exactly one editable card. `notifyType`/`notifiedAt` hold a pending flag/praise notification for `checkNotification.php` to deliver and clear. |
 
 ---
 
@@ -171,6 +173,17 @@ Three tables (all prefixed `mwb_` so the app can share a database with other too
 3. Clicking **Launch** marks the question live and takes the teacher to the Watch board, which polls for new answers every 3 seconds and lays them out as a masonry grid of anonymous cards -- including any answers submitted before launch.
 4. **Clear answers** wipes every answer currently on the board (e.g. inappropriate content, or leftovers from a previous class) without ending the session -- students can keep answering straight away.
 5. Clicking **End Question** marks it no longer live and returns to the dashboard. The code itself is unchanged and still accepts answers, so the same question can be relaunched for another class or another attempt -- use **Clear answers** first if you don't want to carry answers over.
+
+---
+
+## Flagging & Praising Answers
+
+Each card on the Watch board has two small buttons: ⚠️ and 🌟. Clicking one sends a big full-screen notification back to the device that submitted that specific card -- without the teacher ever seeing which student it belongs to.
+
+- **⚠️ Flag** -- for calling out an inappropriate post; the student sees a prompt to review and update their answer.
+- **🌟 Praise** -- for highlighting a particularly good answer; the student sees a congratulatory message.
+
+The student's device (`AnswerSubmit.jsx`) polls `checkNotification.php` every 3 seconds using its own `studentToken`, so the notification only ever reaches the one device that submitted the card. The notification is cleared the moment it's delivered, so the same card can be flagged or praised again later.
 
 ---
 

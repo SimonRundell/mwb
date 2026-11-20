@@ -60,6 +60,15 @@ export default function WatchAnswers() {
         }
     }
 
+    async function handleNotify(answerId, type) {
+        try {
+            await api.post('/notifyAnswer.php', { answerId, type });
+            toast.success(type === 'warning' ? 'Flag sent to student.' : 'Praise sent to student.');
+        } catch {
+            toast.error('Failed to send notification.');
+        }
+    }
+
     async function handleClear() {
         if (!window.confirm('Clear all current answers from the board? This cannot be undone.')) return;
         setClearing(true);
@@ -129,7 +138,11 @@ export default function WatchAnswers() {
                 {answers.length > 0 && (
                     <div className="answer-masonry">
                         {answers.map(a => (
-                            <AnswerCard key={a.id} text={a.answerText} />
+                            <AnswerCard
+                                key={a.id}
+                                text={a.answerText}
+                                onNotify={type => handleNotify(a.id, type)}
+                            />
                         ))}
                     </div>
                 )}

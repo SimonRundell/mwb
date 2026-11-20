@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import api from '../../hooks/useApi';
 import Button  from '../../components/ui/Button';
 import Input   from '../../components/ui/Input';
 import Spinner from '../../components/ui/Spinner';
+
+const NOTIFY_POLL_INTERVAL_MS = 3000;
 
 /**
  * Reads (or creates) the per-browser random token used to identify this
@@ -36,6 +38,8 @@ export default function AnswerSubmit() {
     const [submitted,  setSubmitted]  = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [error,      setError]      = useState('');
+    const [notification, setNotification] = useState(null); // 'warning' | 'praise' | null
+    const notifyPollRef = useRef(null);
 
     useEffect(() => {
         api.post('/getQuestionByCode.php', { questionCode: code })
@@ -43,6 +47,27 @@ export default function AnswerSubmit() {
             .catch(() => setNotFound(true))
             .finally(() => setLoading(false));
     }, [code]);
+
+    // Polls for a big notification the teacher has sent back to this
+    // device by clicking this student's card on the monitor screen.
+    useEffect(() => {
+        if (!question || notFound) return;
+
+        function pollNotification() {
+            api.post('/checkNotification.php', {
+                questionId: question.id,
+                studentToken: getStudentToken(),
+            })
+                .then(res => {
+                    if (res.data?.notifyType) setNotification(res.data.notifyType);
+                })
+                .catch(() => {});
+        }
+
+        pollNotification();
+        notifyPollRef.current = setInterval(pollNotification, NOTIFY_POLL_INTERVAL_MS);
+        return () => clearInterval(notifyPollRef.current);
+    }, [question, notFound]);
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -85,6 +110,27 @@ export default function AnswerSubmit() {
 
     return (
         <div className="entry-page">
+            {notification && (
+                <div
+                    className={`notify-overlay notify-overlay--${notification}`}
+                    role="alert"
+                    onClick={() => setNotification(null)}
+                >
+                    <div className="notify-overlay-icon">
+                        {notification === 'warning' ? '⚠️' : '🌟'}
+                    </div>
+                    <div className="notify-overlay-title">
+                        {notification === 'warning' ? 'Please check your answer' : 'Great answer!'}
+                    </div>
+                    <div className="notify-overlay-message">
+                        {notification === 'warning'
+                            ? 'Your teacher has flagged your answer on the board. Please review and update it.'
+                            : 'Your teacher has highlighted your answer on the board. Well done!'}
+                    </div>
+                    <div className="notify-overlay-hint">Tap anywhere to dismiss</div>
+                </div>
+            )}
+
             <div className="entry-card">
                 <div className="entry-logo">
                     <img src="/exeter-logo.png" alt="Exeter College" />

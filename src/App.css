@@ -716,6 +716,7 @@ img { max-width: 100%; display: block; }
 }
 
 .answer-card {
+  position: relative;
   break-inside: avoid;
   background: var(--white);
   color: var(--gray-900);
@@ -733,6 +734,66 @@ img { max-width: 100%; display: block; }
   line-height: 1.4;
   word-break: break-word;
   text-align: center;
+}
+
+.answer-card-actions {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: flex;
+  gap: var(--space-1);
+}
+
+.answer-card-action {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--gray-200);
+  background: var(--gray-50);
+  font-size: var(--text-base);
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.answer-card-action:hover:not(:disabled) { transform: scale(1.12); }
+.answer-card-action:disabled { cursor: default; opacity: 0.6; }
+.answer-card-action--warning:hover:not(:disabled) { background: var(--warning-light); }
+.answer-card-action--praise:hover:not(:disabled) { background: var(--success-light); }
+
+/* =========================================================
+   STUDENT NOTIFICATION OVERLAY
+   Fired when a teacher clicks a card back on the monitor screen.
+   ========================================================= */
+.notify-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--white);
+  cursor: pointer;
+  animation: notifyOverlayIn 250ms ease;
+}
+
+.notify-overlay--warning { background: rgba(239, 68, 68, 0.97); }
+.notify-overlay--praise  { background: rgba(16, 185, 129, 0.97); }
+
+.notify-overlay-icon { font-size: 5rem; margin-bottom: var(--space-4); }
+.notify-overlay-title { font-size: var(--text-3xl); font-weight: 700; margin-bottom: var(--space-3); }
+.notify-overlay-message { font-size: var(--text-lg); max-width: 480px; line-height: 1.5; }
+.notify-overlay-hint { margin-top: var(--space-6); font-size: var(--text-sm); opacity: 0.85; }
+
+@keyframes notifyOverlayIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 /* =========================================================
