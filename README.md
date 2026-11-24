@@ -1,6 +1,6 @@
 # Mini Whiteboard
 
-A classroom hinge-question tool built for 16-19 year old Further Education students. Teachers write a short rich-text question and launch it under a single stable code; students join with just the code and type a short answer -- no account, no name. The teacher's screen shows every answer live as a masonry board of anonymous cards, similar to holding up mini whiteboards.
+A classroom hinge-question tool built for 16-19 year old Further Education students. Teachers write a short rich-text question and launch it under a single stable code; students join with just the code, give their name, and type a short answer. The teacher's screen shows every answer live as a masonry board of named cards, similar to holding up mini whiteboards -- but with names attached, so a misconception can be traced back to the student who gave it.
 
 Sibling project to [Retrieval Practice](../retrieval) -- same tech stack, branding and conventions, adapted for quick checks for understanding rather than full quizzes.
 
@@ -35,7 +35,9 @@ Sibling project to [Retrieval Practice](../retrieval) -- same tech stack, brandi
 │   ├── registerUser.php        Self-service staff registration, restricted to configured email domains
 │   ├── updateMyAccount.php     Signed-in teacher changes their own display name/password
 │   ├── getUsers.php            List all staff accounts (admin only)
+│   ├── addUser.php             Create a new staff account directly (admin only)
 │   ├── updateUser.php          Edit any account: name, email, reset password, admin/active flags (admin only)
+│   ├── deleteUser.php          Delete a staff account and everything it owns (admin only)
 │   ├── getAllQuestions.php     List the teacher's saved questions
 │   ├── getQuestionById.php     Fetch a single question (editor prefill / watch screen)
 │   ├── insertQuestion.php      Create a new question (JWT required)
@@ -47,7 +49,7 @@ Sibling project to [Retrieval Practice](../retrieval) -- same tech stack, brandi
 │   ├── getAnswers.php          Live answer list for the Watch board (JWT required)
 │   ├── notifyAnswer.php        Flag/praise a card, notifying the originating student (JWT required)
 │   ├── getQuestionByCode.php   Public lookup used by students joining a question
-│   ├── submitAnswer.php        Public upsert of a student's answer, accepted any time
+│   ├── submitAnswer.php        Public upsert of a student's name + answer, accepted any time
 │   └── checkNotification.php   Public poll for a pending flag/praise notification
 │
 ├── data/
@@ -160,17 +162,17 @@ Three tables (all prefixed `mwb_` so the app can share a database with other too
 
 | Table | Purpose |
 | --- | --- |
-| `mwb_user` | Teacher/staff accounts. Students are anonymous and have no rows here. `isAdmin` grants access to the Admin tab; `isActive` (0) blocks login and is checked on every authenticated request, not just at login. |
+| `mwb_user` | Teacher/staff accounts. Students never have rows here. `isAdmin` grants access to the Admin tab; `isActive` (0) blocks login and is checked on every authenticated request, not just at login. |
 | `mwb_question` | One row per hinge question. `questionCode` is assigned once at creation and never changes -- launching just reopens it. |
-| `mwb_answer` | One row per student per launch, keyed by a random `studentToken` generated in the browser. Upserted on submit so each student has exactly one editable card. `notifyType`/`notifiedAt` hold a pending flag/praise notification for `checkNotification.php` to deliver and clear. |
+| `mwb_answer` | One row per student per launch, keyed by a random `studentToken` generated in the browser, alongside the `studentName` they typed in. Upserted on submit so each student has exactly one editable card. `notifyType`/`notifiedAt` hold a pending flag/praise notification for `checkNotification.php` to deliver and clear. |
 
 ---
 
 ## Live Question Flow
 
 1. The teacher creates a question in the rich text editor and saves it -- this assigns a permanent code.
-2. Students can visit the site, enter the code, and type a short answer as soon as the question is saved -- a code always accepts answers, whether or not a teacher has opened its monitor screen yet. No name or login is required -- their card is tracked by a random token stored in their browser, so they can revise their answer as many times as they like.
-3. Clicking **Launch** marks the question live and takes the teacher to the Watch board, which polls for new answers every 3 seconds and lays them out as a masonry grid of anonymous cards -- including any answers submitted before launch.
+2. Students can visit the site, enter the code, type their name, and type a short answer as soon as the question is saved -- a code always accepts answers, whether or not a teacher has opened its monitor screen yet. Their card is tracked by a random token stored in their browser (alongside their typed name, so they don't need to retype it next time), so they can revise their answer as many times as they like.
+3. Clicking **Launch** marks the question live and takes the teacher to the Watch board, which polls for new answers every 3 seconds and lays them out as a masonry grid of named cards -- including any answers submitted before launch.
 4. **Clear answers** wipes every answer currently on the board (e.g. inappropriate content, or leftovers from a previous class) without ending the session -- students can keep answering straight away.
 5. Clicking **End Question** marks it no longer live and returns to the dashboard. The code itself is unchanged and still accepts answers, so the same question can be relaunched for another class or another attempt -- use **Clear answers** first if you don't want to carry answers over.
 
@@ -178,7 +180,7 @@ Three tables (all prefixed `mwb_` so the app can share a database with other too
 
 ## Flagging & Praising Answers
 
-Each card on the Watch board has two small buttons: ⚠️ and 🌟. Clicking one sends a big full-screen notification back to the device that submitted that specific card -- without the teacher ever seeing which student it belongs to.
+Each card on the Watch board is labelled with the student's name, and has two small buttons: ⚠️ and 🌟. Clicking one sends a big full-screen notification back to the device that submitted that specific card.
 
 - **⚠️ Flag** -- for calling out an inappropriate post; the student sees a prompt to review and update their answer.
 - **🌟 Praise** -- for highlighting a particularly good answer; the student sees a congratulatory message.
@@ -221,7 +223,7 @@ Content is stored and transmitted as HTML and sanitised with DOMPurify's default
 
 Teachers log in with email and password (stored as MD5 hashes in `mwb_user.passwordHash`). On success, `getLogin.php` issues a JWT signed with HS256, valid for 24 hours. The token is stored in `localStorage` and injected as a `Bearer` header on every Axios request by `src/hooks/useApi.js`.
 
-Students are fully anonymous -- they never provide a name, only the question code and their answer.
+Students never create an account -- just a question code, their name and their answer.
 
 ### Registration
 
@@ -233,14 +235,13 @@ Every signed-in teacher can update their own display name and/or password from *
 
 ### Admin tab
 
-Accounts with `isAdmin = 1` see an **Admin** link in the header, leading to `/teacher/admin`. From there an administrator can, for any account:
+Accounts with `isAdmin = 1` see an **Admin** link in the header, leading to `/teacher/admin`. From there an administrator can:
 
-- Edit the display name and email address
-- Set a new password
-- Grant or revoke admin rights
-- Activate or deactivate the account (a deactivated account cannot log in, and is signed out of any existing session immediately -- see below)
+- **Add user** -- create a new staff account directly (name, email, password, admin/active flags), bypassing the self-service email-domain restriction since an administrator is vouching for it.
+- For any existing account: edit the display name and email address, set a new password, grant or revoke admin rights, and activate or deactivate it (a deactivated account cannot log in, and is signed out of any existing session immediately -- see below).
+- **Delete** an account entirely, along with any questions (and their answers) it owns. An administrator cannot delete their own account, and the last remaining administrator cannot be deleted -- in both cases, another admin has to do it, to avoid locking everyone out of the Admin tab.
 
-An administrator cannot change their own admin or active status from this screen, to avoid accidentally locking themselves (or the only admin) out; another admin has to do it.
+An administrator cannot change their own admin or active status from this screen either, to avoid accidentally locking themselves (or the only admin) out; another admin has to do it.
 
 ### Enforcement
 
@@ -265,6 +266,21 @@ npm run build
 ```
 
 Upload the contents of `dist/` and the entire `api/` directory to your web host. Ensure `api/.config.json` is present on the server but not publicly accessible -- consider placing it above the web root and updating the path in `setup.php` accordingly.
+
+---
+
+## Changelog
+
+| Version | Changes |
+| --- | --- |
+| **0.7.0** | Student cards now carry a required name (`studentName`), so a teacher can trace an answer -- and a misconception -- back to the student who gave it. The name is remembered in the browser alongside the existing anonymous token, so returning students don't retype it. The app is no longer anonymous end-to-end; `README` and in-code comments describing "anonymous cards" are updated accordingly. |
+| 0.6.0 | Teacher can flag ⚠️ or praise 🌟 an answer card from the Watch board; the originating student's device picks this up via `checkNotification.php` and shows a full-screen notification once, then clears it. |
+| 0.5.0 | Admin tab can now add and delete staff accounts (`addUser.php`, `deleteUser.php`), not just edit existing ones. Answers are no longer gated on launch state -- students can join and submit by code at any time, before **Launch** or after **End Question** -- so **Launch** now simply marks a question live and opens its monitor screen, and **End Question** just leaves it, without clearing anything. A new **Clear answers** button on the Watch board wipes the current answers on demand (inappropriate content, leftovers from a previous class) without ending the session. `setup.php` also gained a global exception/fatal-error handler so uncaught errors (e.g. a schema mismatch) are logged to `api/server.log` with full detail instead of silently returning a bare 500. |
+| 0.4.1 | `.htaccess` fallback improvements for Apache hosts that strip the `Authorization` header. |
+| 0.4.0 | Question import/export as JSON, admin tab (account management), self-service password change via My Account. |
+| 0.3.0 | Delete Question. |
+| 0.2.0 | Rich text editor gained code blocks with indent/outdent support. |
+| 0.1.0 | Initial release. |
 
 ---
 

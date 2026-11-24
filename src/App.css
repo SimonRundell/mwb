@@ -728,6 +728,15 @@ img { max-width: 100%; display: block; }
   animation: slideUp 200ms ease;
 }
 
+.answer-card-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--primary);
+  text-align: center;
+  margin-bottom: var(--space-2);
+  word-break: break-word;
+}
+
 .answer-card-text {
   font-size: var(--text-xl);
   font-weight: 600;

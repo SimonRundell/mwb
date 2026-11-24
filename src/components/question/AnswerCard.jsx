@@ -1,15 +1,16 @@
 import { useState } from 'react';
 
 /**
- * AnswerCard — a single anonymous student answer on the teacher's masonry
- * board. The flag/praise buttons send a big full-screen notification back
- * to whichever device submitted this card (see notifyAnswer.php), without
- * the teacher ever seeing which student that is.
+ * AnswerCard — a single student answer on the teacher's masonry board,
+ * labelled with the student's name so misconceptions can be traced back to
+ * who gave them. The flag/praise buttons send a big full-screen notification
+ * back to whichever device submitted this card (see notifyAnswer.php).
  *
+ * @param {string}   name      The student's name.
  * @param {string}   text      The student's answer text.
  * @param {Function} onNotify  async (type: 'warning'|'praise') => void
  */
-export default function AnswerCard({ text, onNotify }) {
+export default function AnswerCard({ name, text, onNotify }) {
     const [sending, setSending] = useState(null);
     const [sent, setSent] = useState(null);
 
@@ -47,6 +48,7 @@ export default function AnswerCard({ text, onNotify }) {
                     {sent === 'praise' ? '✓' : '🌟'}
                 </button>
             </div>
+            <p className="answer-card-name">{name}</p>
             <p className="answer-card-text">{text}</p>
         </div>
     );

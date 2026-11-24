@@ -10,7 +10,7 @@ const NOTIFY_POLL_INTERVAL_MS = 3000;
 
 /**
  * Reads (or creates) the per-browser random token used to identify this
- * student's own answer card, without ever collecting their name.
+ * student's own answer card.
  */
 function getStudentToken() {
     let token = localStorage.getItem('mwbStudentToken');
@@ -22,10 +22,13 @@ function getStudentToken() {
 }
 
 /**
- * AnswerSubmit — renders the teacher's rich-text question and a short
- * answer box. Submission upserts the student's own card by studentToken,
- * so they can revise their answer any time, whether or not the teacher
- * has opened the monitor screen yet.
+ * AnswerSubmit — renders the teacher's rich-text question, a required name
+ * field, and a short answer box. The name is shown on the student's card so
+ * the teacher can trace an answer back to who gave it (e.g. to follow up on
+ * a misconception); it's remembered in this browser so it doesn't need
+ * retyping for the next question. Submission upserts the student's own card
+ * by studentToken, so they can revise their answer any time, whether or not
+ * the teacher has opened the monitor screen yet.
  */
 export default function AnswerSubmit() {
     const { code } = useParams();
@@ -34,6 +37,7 @@ export default function AnswerSubmit() {
     const [question,   setQuestion]   = useState(null);
     const [loading,    setLoading]    = useState(true);
     const [notFound,   setNotFound]   = useState(false);
+    const [name,       setName]       = useState(() => localStorage.getItem('mwbStudentName') || '');
     const [answer,     setAnswer]     = useState('');
     const [submitted,  setSubmitted]  = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -72,15 +76,19 @@ export default function AnswerSubmit() {
     async function handleSubmit(e) {
         e.preventDefault();
         setError('');
+        if (!name.trim()) return setError('Please enter your name.');
         if (!answer.trim()) return setError('Please type an answer.');
 
         setSubmitting(true);
         try {
+            const trimmedName = name.trim();
             await api.post('/submitAnswer.php', {
                 questionId: question.id,
                 studentToken: getStudentToken(),
+                studentName: trimmedName,
                 answerText: answer.trim(),
             });
+            localStorage.setItem('mwbStudentName', trimmedName);
             setSubmitted(true);
         } catch {
             setError('Failed to submit. Please try again.');
@@ -140,12 +148,20 @@ export default function AnswerSubmit() {
 
                 <form onSubmit={handleSubmit} noValidate>
                     <Input
+                        label="Your name"
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                        placeholder="e.g. Jamie Smith"
+                        maxLength={50}
+                        autoFocus={!name}
+                    />
+                    <Input
                         label="Your answer"
                         value={answer}
                         onChange={e => setAnswer(e.target.value)}
                         placeholder="Type your answer…"
                         maxLength={500}
-                        autoFocus
+                        autoFocus={!!name}
                     />
                     {error && <p className="form-error" role="alert">{error}</p>}
                     <Button type="submit" fullWidth size="lg" disabled={submitting} className="mt-2">

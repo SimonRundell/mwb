@@ -140,6 +140,7 @@ export default function WatchAnswers() {
                         {answers.map(a => (
                             <AnswerCard
                                 key={a.id}
+                                name={a.studentName}
                                 text={a.answerText}
                                 onNotify={type => handleNotify(a.id, type)}
                             />

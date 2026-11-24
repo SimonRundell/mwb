@@ -72,6 +72,7 @@ CREATE TABLE `mwb_answer` (
     `id`           INT          NOT NULL AUTO_INCREMENT,
     `questionId`   INT          NOT NULL,
     `studentToken` VARCHAR(64)  NOT NULL,
+    `studentName`  VARCHAR(50)  NOT NULL,
     `answerText`   VARCHAR(500) NOT NULL,
     `submittedAt`  DATETIME     NOT NULL,
     `updatedAt`    DATETIME     NOT NULL,

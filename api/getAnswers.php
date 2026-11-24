@@ -4,8 +4,8 @@
  * teacher's live masonry board. Polled every few seconds.
  *
  * POST { id } (JWT required)
- * Returns a JSON array of { id, answerText, submittedAt, updatedAt }
- * (no studentToken — answers are anonymous on the teacher's board).
+ * Returns a JSON array of { id, studentName, answerText, submittedAt, updatedAt }
+ * (no studentToken — that stays server-side).
  *
  * @license CC BY-NC-SA 4.0 — Simon Rundell / CodeMonkey Design Ltd. 2026
  */
@@ -27,7 +27,7 @@ if (!$question) {
 }
 
 $stmt = $mysqli->prepare(
-    "SELECT id, answerText, submittedAt, updatedAt
+    "SELECT id, studentName, answerText, submittedAt, updatedAt
      FROM mwb_answer
      WHERE questionId = ?
      ORDER BY submittedAt ASC"

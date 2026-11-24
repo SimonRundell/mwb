@@ -2,5 +2,5 @@
     "appName": "Mini Whiteboard",
     "strapline": "Quick checks for understanding",
     "credits": "Simon Rundell 2026 - Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License    ",
-    "api": "http://localhost:8080/api"
+    "api": "http://127.0.0.1:8080/api"
 }
